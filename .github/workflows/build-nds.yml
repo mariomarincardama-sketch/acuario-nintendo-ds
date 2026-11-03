@@ -1,4 +1,4 @@
-name: Construir NDS
+name: Construir NDS (sin guardado en SD)
 on:
   push:
   workflow_dispatch:
@@ -24,14 +24,10 @@ jobs:
           rm -f proj/source/*
           mkdir -p proj/source
           cp main.c species.h proj/source/
-          cd proj
-          if grep -q -- '-lnds9' Makefile; then
-            sed -i 's/-lnds9/-lfat -lnds9/' Makefile
-            sed -i 's/^CFLAGS[[:space:]]*:=/CFLAGS := -DUSE_FAT/' Makefile
-          fi
       - name: Compilar
         run: make -C proj
       - uses: actions/upload-artifact@v4
         with:
           name: ReefKeeper-NDS
           path: proj/*.nds
+ 
