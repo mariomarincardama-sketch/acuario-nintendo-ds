@@ -1,0 +1,37 @@
+name: Construir NDS
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar librerias y ejemplos
+        run: |
+          dkp-pacman -Sy --noconfirm nds-dev nds-examples || true
+      - name: Preparar proyecto
+        run: |
+          HW=$(find /opt/devkitpro -type d -name hello_world -path '*nds*' | head -n 1)
+          echo "Plantilla: $HW"
+          ls -la
+          test -n "$HW"
+          test -f main.c
+          test -f species.h
+          rm -rf proj
+          cp -r "$HW" proj
+          rm -f proj/source/*
+          mkdir -p proj/source
+          cp main.c species.h proj/source/
+          cd proj
+          if grep -q -- '-lnds9' Makefile; then
+            sed -i 's/-lnds9/-lfat -lnds9/' Makefile
+            sed -i 's/^CFLAGS[[:space:]]*:=/CFLAGS := -DUSE_FAT/' Makefile
+          fi
+      - name: Compilar
+        run: make -C proj
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ReefKeeper-NDS
+          path: proj/*.nds
